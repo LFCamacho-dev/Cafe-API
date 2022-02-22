@@ -1,3 +1,4 @@
+import os
 from random import choice
 
 from flask import Flask, jsonify, render_template, request
@@ -136,7 +137,34 @@ def add_cafe():
 
 # HTTP PUT/PATCH - Update Record
 
+@app.route('/update-price/<int:cafe_id>', methods=['PATCH'])
+def update_price(cafe_id):
+    new_price = request.args.get("new_price")
+    cafe = db.session.query(Cafe).get(cafe_id)
+    if cafe:
+        cafe.coffee_price = new_price
+        db.session.commit()
+        return jsonify(response={"success": "Successfully updated the price."}), 200
+    else:
+        return jsonify(error={"Not Found": "Sorry a cafe with that id was not found in the database."}), 404
+
+
 # HTTP DELETE - Delete Record
+
+@app.route('/report-closed/<int:cafe_id>', methods=['DELETE'])
+def delete_cafe(cafe_id):
+    api_key = request.args.get("api-key")
+    if api_key == "TopSecretAPIKey":
+        cafe = db.session.query(Cafe).get(cafe_id)
+        if cafe:
+            db.session.delete(cafe)
+            db.session.commit()
+            return jsonify(response={"success": "Successfully deleted."}), 200
+        else:
+            return jsonify(response={"Not Found": "Sorry, a cafe with that id was not found in the database"}), 404
+    else:
+        return jsonify(response={"error": "Sorry, you don't have authorization to perform this action :P"}), 403
+
 
 if __name__ == '__main__':
     app.run(debug=True)
